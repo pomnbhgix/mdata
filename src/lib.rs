@@ -6,3 +6,4 @@ extern crate rusqlite;
 
 pub mod little_spider;
 pub mod sqlite_handler;
+pub mod file;

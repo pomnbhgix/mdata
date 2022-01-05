@@ -147,3 +147,24 @@ pub fn get_video_info(produce_id: String) -> Result<Video, Box<dyn std::error::E
 
     return Ok(result);
 }
+
+pub fn get_video_info_with_name(
+    produce_id: String,
+    name: String,
+) -> Result<Video, Box<dyn std::error::Error>> {
+    let url = format!("https://www.javbus.com/{}", produce_id);
+
+    let body = reqwest::blocking::get(url)?.text()?;
+
+    let document = Html::parse_document(&body);
+
+    let mut result = Video::new(produce_id);
+
+    result.init(&document);
+
+    if result.name.is_empty() && !name.is_empty() {
+        result.name = name;
+    }
+
+    return Ok(result);
+}
