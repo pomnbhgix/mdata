@@ -38,8 +38,8 @@ pub fn create_connect() -> Option<Connection> {
 
 fn insert_or_replace(connect: Connection, data: &javbus::Video) -> Result<usize> {
     return connect.execute(
-        "INSERT OR REPLACE INTO avInfo(product_id,name,actors,date,tags,author,series) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-        params![data.produce_id,data.name,data.actors,data.date,data.tags,data.author,data.series]);
+        "INSERT OR REPLACE INTO avInfo(product_id,name,actors,date,tags,author,series,state) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+        params![data.produce_id,data.name,data.actors,data.date,data.tags,data.author,data.series,"uncheck"]);
 }
 
 pub fn save_video_data(data: &javbus::Video) {
@@ -55,8 +55,8 @@ pub fn save_video_data(data: &javbus::Video) {
 
 fn insert_or_replace_asmr(connect: Connection, data: &dlsite::Asmr) -> Result<usize> {
     return connect.execute(
-        "INSERT OR REPLACE INTO asmrInfo(product_id,name,voice_actors,date,tags,author,series) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-        params![data.produce_id,data.name,data.actors,data.date,data.tags,data.author,data.series]);
+        "INSERT OR REPLACE INTO asmrInfo(product_id,name,voice_actors,date,tags,author,series,state) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+        params![data.produce_id,data.name,data.actors,data.date,data.tags,data.author,data.series,"uncheck"]);
 }
 
 pub fn save_asmr_data(data: &dlsite::Asmr) {
