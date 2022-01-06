@@ -1,3 +1,4 @@
+use crate::config;
 use crate::little_spider::site::dlsite;
 use crate::little_spider::site::javbus;
 
@@ -27,9 +28,12 @@ macro_rules! get_connect {
 }
 
 pub fn create_connect() -> Option<Connection> {
-    if let Ok(v) = Connection::open("D:/work/notes/assets/check.db") {
-        if let Ok(_n) = v.execute_batch("PRAGMA key='data'") {
-            return Some(v);
+    if let Ok(path) = config::get_database_path() {
+        if let Ok(v) = Connection::open(path) {
+            if let Ok(_n) = v.execute_batch("PRAGMA key='data'") {
+                println!("connect success");
+                return Some(v);
+            }
         }
     }
     println!("create fail");
