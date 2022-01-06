@@ -13,7 +13,7 @@ where
     Ok(io::BufReader::new(file).lines())
 }
 
-pub fn read_data(path: &str)->Vec<(String, String)> {
+pub fn read_data(path: &str) -> Vec<(String, String)> {
     let mut vec: Vec<(String, String)> = Vec::new();
     if let Ok(lines) = read_lines(path) {
         for line in lines {
@@ -67,6 +67,49 @@ pub fn read_data(path: &str)->Vec<(String, String)> {
                 //         println!("{}", s);
                 //     }
                 // }
+            }
+        }
+    }
+    return vec;
+}
+
+pub fn read_data_v2(path: &str) -> Vec<String> {
+    let mut vec: Vec<String> = Vec::new();
+    if let Ok(lines) = read_lines(path) {
+        for line in lines {
+            if let Ok(l) = line {
+                let date: Vec<&str> = l.split(" ").collect();
+                vec.push(date.first().unwrap().to_string());
+                println!("{}", date.first().unwrap());
+            }
+        }
+    }
+    return vec;
+}
+
+pub fn read_asmr_data(path: &str) -> Vec<String> {
+    let mut vec: Vec<String> = Vec::new();
+    if let Ok(lines) = read_lines(path) {
+        for line in lines {
+            if let Ok(l) = line {
+                if l.contains("##") {
+                    continue;
+                }
+                if l.is_empty() {
+                    continue;
+                }
+
+                if l.contains("_") {
+                    let date: Vec<&str> = l.split("_").collect();
+                    for s in date {
+                        if s.contains("RJ"){
+                            vec.push(s.to_string());
+                        }
+                    }
+                    continue;
+                }
+
+                
             }
         }
     }

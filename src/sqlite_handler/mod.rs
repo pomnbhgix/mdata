@@ -26,7 +26,7 @@ macro_rules! get_connect {
 }
 
 pub fn create_connect() -> Option<Connection> {
-    if let Ok(v) = Connection::open("D:/work/notes/assets/check.db") {
+    if let Ok(v) = Connection::open("D:/files/notes/assets/check.db") {
         if let Ok(_n) = v.execute_batch("PRAGMA key='data'") {
             return Some(v);
         }

@@ -3,12 +3,11 @@ use mdata::little_spider::site::javbus;
 use mdata::sqlite_handler;
 
 fn main() {
-    let info = javbus::get_video_info("HNDS-016".to_string()).unwrap();
-    sqlite_handler::save_video_data(&info);
-    // let path = "avcheck.md";
-    // let data = file::read_data(path);
-    // for (id, name) in data {
-    //     let info = javbus::get_video_info_with_name(id,name).unwrap();
+
+    let path = "unhandle_data/asmrcheck.md";
+    let data = file::read_asmr_data(path);
+    // for id in data {
+    //     let info = javbus::get_video_info(id).unwrap();
     //     sqlite_handler::save_video_data(&info);
     // }
     
