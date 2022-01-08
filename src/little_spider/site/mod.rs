@@ -1,5 +1,6 @@
 pub mod dlsite;
 pub mod javbus;
+pub mod wikipedia;
 
 use scraper::{ElementRef, Selector};
 
