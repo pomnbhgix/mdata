@@ -2,7 +2,6 @@ use reqwest;
 
 use std::collections::HashMap;
 
-pub fn hello_world() {}
 
 pub async fn get_response() -> Result<(), Box<dyn std::error::Error>> {
     let resp = reqwest::get("https://httpbin.org/ip")
@@ -11,4 +10,10 @@ pub async fn get_response() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
     println!("{:#?}", resp);
     Ok(())
+}
+
+
+pub fn get_text_response(url: &str) -> Result<String, Box<dyn std::error::Error>> {
+    let resp = reqwest::blocking::get(url)?.text()?;
+    Ok(resp)
 }

@@ -24,7 +24,7 @@
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
-            "console": "integratedTerminal",
+            "console": "externalTerminal",
             "preLaunchTask": "cargo test build",
         }
     ]

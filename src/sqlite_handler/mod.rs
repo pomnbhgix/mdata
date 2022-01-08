@@ -1,6 +1,7 @@
 use crate::config;
 use crate::little_spider::site::dlsite;
 use crate::little_spider::site::javbus;
+use crate::little_spider::site::wikipedia;
 
 use rusqlite::{params, Connection, Result};
 use std::sync::Mutex;
@@ -66,6 +67,29 @@ fn insert_or_replace_asmr(connect: Connection, data: &dlsite::Asmr) -> Result<us
 pub fn save_asmr_data(data: &dlsite::Asmr) {
     if let Some(connect) = get_connect!() {
         if let Err(n) = insert_or_replace_asmr(connect, data) {
+            println!("action fail err:{}", n);
+        } else {
+            println!("action success");
+            println!("{:?}", data);
+        }
+    }
+}
+
+fn insert_or_replace_anime(connect: Connection, data: &wikipedia::A1CWork) -> Result<usize> {
+    return connect.execute(
+        "INSERT OR REPLACE INTO animeR18Info(name,author,date,company) VALUES (?1, ?2, ?3, ?4)",
+        params![
+            data.name,
+            data.author,
+            data.date,
+            "エイ・ワン・シー (a1c. Co., Ltd.)"
+        ],
+    );
+}
+
+pub fn save_anime_data(data: &wikipedia::A1CWork) {
+    if let Some(connect) = get_connect!() {
+        if let Err(n) = insert_or_replace_anime(connect, data) {
             println!("action fail err:{}", n);
         } else {
             println!("action success");
