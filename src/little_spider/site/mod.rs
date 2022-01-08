@@ -11,12 +11,12 @@ fn join_all_a_elements_inner_html(element: &ElementRef) -> String {
     return String::new();
 }
 
-fn join_all_li_elements_inner_html(element: &ElementRef) -> String {
-    if let Ok(a_selector) = Selector::parse("li") {
-        return join_elements_inner_html(element.select(&a_selector).collect::<Vec<_>>());
-    }
-    return String::new();
-}
+// fn join_all_li_elements_inner_html(element: &ElementRef) -> String {
+//     if let Ok(a_selector) = Selector::parse("li") {
+//         return join_elements_inner_html(element.select(&a_selector).collect::<Vec<_>>());
+//     }
+//     return String::new();
+// }
 
 fn join_elements_inner_html(elements: Vec<ElementRef>) -> String {
     return get_elements_inner_html(elements).join(",");
