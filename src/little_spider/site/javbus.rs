@@ -1,3 +1,4 @@
+use crate::little_spider::http;
 use reqwest;
 use scraper::{ElementRef, Html, Selector};
 
@@ -146,4 +147,109 @@ pub fn get_video_info_with_name(
     }
 
     return Ok(result);
+}
+
+#[derive(Debug)]
+pub struct ActorInfo {
+    pub name: String,
+    pub alias: String,
+    pub born: String,
+    pub height: String,
+    pub weight: String,
+    pub bra: String,
+    pub hobby: String,
+    pub body_measurements: String,
+    pub debut_date: String,
+}
+
+impl ActorInfo {
+    /// Creates new header given it's name and value.
+    fn new(name: String) -> Self {
+        ActorInfo {
+            name: name,
+            alias: String::new(),
+            born: String::new(),
+            height: String::new(),
+            weight: String::new(),
+            bra: String::new(),
+            hobby: String::new(),
+            body_measurements: String::new(),
+            debut_date: String::new(),
+        }
+    }
+
+    fn set_value_by_raw(&mut self, value: Vec<String>) {
+        for d in value {
+            let vec = d.split(":").collect::<Vec<&str>>();
+            if let Some(key) = vec.get(0) {
+                match key.as_ref() {
+                    "生日" => {
+                        if let Some(v) = vec.get(1) {
+                            self.born = String::from(*v);
+                        }
+                    }
+                    "身高" => {
+                        if let Some(v) = vec.get(1) {
+                            self.height = String::from(*v);
+                        }
+                    }
+                    "罩杯" => {
+                        if let Some(v) = vec.get(1) {
+                            self.bra = String::from(*v);
+                        }
+                    }
+                    "愛好" => {
+                        if let Some(v) = vec.get(1) {
+                            self.hobby = String::from(*v);
+                        }
+                    }
+                    "胸圍" => self.body_measurements.push_str(&d),
+                    "腰圍" => self.body_measurements.push_str(&d),
+                    "臀圍" => self.body_measurements.push_str(&d),
+                    _ => println!("something else!"),
+                }
+            }
+        }
+    }
+}
+
+fn get_actor_info_url(actor_name: &str) -> Result<String, Box<dyn std::error::Error>> {
+    let url = format!("https://www.javbus.com/searchstar/{}", actor_name);
+
+    let body = http::get_text_response(&url)?;
+
+    let document = Html::parse_document(&body);
+
+    let select = Selector::parse("#waterfall > div > a").expect("Create select fail");
+
+    let data = document.select(&select).next().expect("Found node fail");
+
+    let data_url = data.value().attr("href").expect("Get node href fail");
+
+    Ok(String::from(data_url))
+}
+
+pub fn get_actor_info(actor_name: &str) {
+    let data_url = get_actor_info_url(actor_name).unwrap();
+
+    let info_body = http::get_text_response(&data_url).unwrap();
+
+    let info_document = Html::parse_document(&info_body);
+
+    let info_select = Selector::parse("div.photo-info").unwrap();
+
+    let actor_info = info_document.select(&info_select).next().unwrap();
+
+    let ptag_select = Selector::parse("p").unwrap();
+
+    let infos: Vec<ElementRef> = actor_info.select(&ptag_select).collect();
+
+    let info_vec = super::get_elements_inner_html(infos);
+
+    let mut result = ActorInfo::new(String::from(actor_name));
+
+    result.set_value_by_raw(info_vec);
+
+    println!("{:?}", result);
+
 }

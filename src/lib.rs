@@ -13,13 +13,10 @@ pub mod sqlite_handler;
 
 #[cfg(test)]
 mod tests {
-
-    use super::*;
+    use super::little_spider::site::*;
 
     #[test]
     fn exploration() {
-        for data in little_spider::site::wikipedia::get_a1c_works() {
-            sqlite_handler::save_anime_data(&data);
-        }
+        javbus::get_actor_info("三上悠亜");
     }
 }
