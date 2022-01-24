@@ -1,19 +1,21 @@
 use reqwest;
-
+use anyhow::Result;
 use std::collections::HashMap;
 
 
-pub async fn get_response() -> Result<(), Box<dyn std::error::Error>> {
-    let resp = reqwest::get("https://httpbin.org/ip")
-        .await?
-        .json::<HashMap<String, String>>()
-        .await?;
-    println!("{:#?}", resp);
-    Ok(())
+pub fn get_response(url: &str) -> Result<reqwest::blocking::Response,reqwest::Error> {
+    let res = reqwest::blocking::get(url)?;
+
+    Ok(res)
 }
 
+pub fn get_text_response(url: &str) -> Result<String> {
 
-pub fn get_text_response(url: &str) -> Result<String, Box<dyn std::error::Error>> {
-    let resp = reqwest::blocking::get(url)?.text()?;
-    Ok(resp)
+    let response = get_response(url)?;
+
+    if response.status() == reqwest::StatusCode::OK {
+       return Ok(response.text()?)
+    }
+
+    Ok(String::new())
 }

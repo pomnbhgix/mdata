@@ -5,6 +5,8 @@ extern crate reqwest;
 extern crate rusqlite;
 extern crate scraper;
 extern crate serde;
+#[macro_use]
+extern crate anyhow;
 
 pub mod config;
 pub mod file;
@@ -14,9 +16,14 @@ pub mod sqlite_handler;
 #[cfg(test)]
 mod tests {
     use super::little_spider::site::*;
+    use super::sqlite_handler::*;
 
     #[test]
     fn exploration() {
-        javbus::get_actor_info("三上悠亜");
+        let info = javbus::get_actor_works("三上悠亜");
+        match info {
+            Ok(r) => println!("{:?}", r),
+            Err(e) => println!("{:?}", e),
+        }
     }
 }

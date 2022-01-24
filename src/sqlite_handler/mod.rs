@@ -97,3 +97,20 @@ pub fn save_anime_data(data: &wikipedia::A1CWork) {
         }
     }
 }
+
+fn insert_or_replace_anime_info(connect: Connection, data: &javbus::ActorInfo) -> Result<usize> {
+    return connect.execute(
+        "INSERT OR REPLACE INTO actorInfo(name,born,height,bra,hobby,body_measurements) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+        params![data.name,data.born,data.height,data.bra,data.hobby,data.get_body_measurements()]);
+}
+
+pub fn save_actor_info_data(data: &javbus::ActorInfo) {
+    if let Some(connect) = get_connect!() {
+        if let Err(n) = insert_or_replace_anime_info(connect, data) {
+            println!("action fail err:{}", n);
+        } else {
+            println!("action success");
+            println!("{:?}", data);
+        }
+    }
+}

@@ -1,4 +1,5 @@
 use crate::little_spider::http;
+use anyhow::{Context, Error, Result};
 use reqwest;
 use scraper::{ElementRef, Html, Selector};
 
@@ -158,7 +159,9 @@ pub struct ActorInfo {
     pub weight: String,
     pub bra: String,
     pub hobby: String,
-    pub body_measurements: String,
+    pub bust: String,
+    pub waist: String,
+    pub hip: String,
     pub debut_date: String,
 }
 
@@ -173,7 +176,9 @@ impl ActorInfo {
             weight: String::new(),
             bra: String::new(),
             hobby: String::new(),
-            body_measurements: String::new(),
+            bust: String::new(),
+            waist: String::new(),
+            hip: String::new(),
             debut_date: String::new(),
         }
     }
@@ -181,66 +186,75 @@ impl ActorInfo {
     fn set_value_by_raw(&mut self, value: Vec<String>) {
         for d in value {
             let vec = d.split(":").collect::<Vec<&str>>();
+
             if let Some(key) = vec.get(0) {
                 match key.as_ref() {
-                    "生日" => {
-                        if let Some(v) = vec.get(1) {
-                            self.born = String::from(*v);
-                        }
-                    }
-                    "身高" => {
-                        if let Some(v) = vec.get(1) {
-                            self.height = String::from(*v);
-                        }
-                    }
-                    "罩杯" => {
-                        if let Some(v) = vec.get(1) {
-                            self.bra = String::from(*v);
-                        }
-                    }
-                    "愛好" => {
-                        if let Some(v) = vec.get(1) {
-                            self.hobby = String::from(*v);
-                        }
-                    }
-                    "胸圍" => self.body_measurements.push_str(&d),
-                    "腰圍" => self.body_measurements.push_str(&d),
-                    "臀圍" => self.body_measurements.push_str(&d),
+                    "生日" => self.born = get_vec_data(&vec, 1),
+                    "身高" => self.height = get_vec_data(&vec, 1),
+                    "罩杯" => self.bra = get_vec_data(&vec, 1),
+                    "愛好" => self.hobby = get_vec_data(&vec, 1),
+                    "胸圍" => self.bust = get_vec_data_with_remove_cm(&vec, 1),
+                    "腰圍" => self.waist = get_vec_data_with_remove_cm(&vec, 1),
+                    "臀圍" => self.hip = get_vec_data_with_remove_cm(&vec, 1),
                     _ => println!("something else!"),
                 }
             }
         }
     }
+
+    pub fn get_body_measurements(&self) -> String {
+        format!("{}-{}-{}", self.bust, self.waist, self.hip)
+    }
 }
 
-fn get_actor_info_url(actor_name: &str) -> Result<String, Box<dyn std::error::Error>> {
-    let url = format!("https://www.javbus.com/searchstar/{}", actor_name);
+fn get_vec_data_with_remove_cm(vec: &Vec<&str>, index: usize) -> String {
+    let value = get_vec_data(vec, index);
+    String::from(value.replace("cm", "").trim())
+}
 
+fn get_vec_data(vec: &Vec<&str>, index: usize) -> String {
+    if let Some(v) = vec.get(index) {
+        return String::from(*v);
+    }
+    String::new()
+}
+
+fn get_actor_info_url(actor_name: &str) -> Result<String> {
+    let url = format!("https://www.javbus.com/searchstar/{}", actor_name);
     let body = http::get_text_response(&url)?;
 
     let document = Html::parse_document(&body);
 
-    let select = Selector::parse("#waterfall > div > a").expect("Create select fail");
+    let select = get_selector("#waterfall > div > a")?;
 
-    let data = document.select(&select).next().expect("Found node fail");
+    let data = document
+        .select(&select)
+        .next()
+        .context(format!("select document return none :{:?}", select))?;
 
-    let data_url = data.value().attr("href").expect("Get node href fail");
+    let data_url = data
+        .value()
+        .attr("href")
+        .context(format!("read attr attr return none :{:?}", data))?;
 
     Ok(String::from(data_url))
 }
 
-pub fn get_actor_info(actor_name: &str) {
-    let data_url = get_actor_info_url(actor_name).unwrap();
+pub fn get_actor_info(actor_name: &str) -> Result<ActorInfo, Box<dyn std::error::Error>> {
+    let data_url = get_actor_info_url(actor_name)?;
 
-    let info_body = http::get_text_response(&data_url).unwrap();
+    let info_body = http::get_text_response(&data_url)?;
 
     let info_document = Html::parse_document(&info_body);
 
-    let info_select = Selector::parse("div.photo-info").unwrap();
+    let info_select = get_selector("div.photo-info")?;
 
-    let actor_info = info_document.select(&info_select).next().unwrap();
+    let actor_info = info_document
+        .select(&info_select)
+        .next()
+        .context(format!("select document return none :{:?}", info_select))?;
 
-    let ptag_select = Selector::parse("p").unwrap();
+    let ptag_select = get_selector("p")?;
 
     let infos: Vec<ElementRef> = actor_info.select(&ptag_select).collect();
 
@@ -250,6 +264,38 @@ pub fn get_actor_info(actor_name: &str) {
 
     result.set_value_by_raw(info_vec);
 
-    println!("{:?}", result);
+    Ok(result)
+}
 
+fn get_selector(selectors: &str) -> Result<scraper::Selector> {
+    Ok(Selector::parse(selectors).map_err(|e| anyhow!("Selector parse fail : {:?}", e))?)
+}
+
+pub fn get_actor_works(actor_name: &str) -> Result<ActorInfo> {
+    let data_url = get_actor_info_url(actor_name)?;
+
+    let date_work_url = data_url.clone() + "/10";
+
+    let info_body = http::get_text_response(&date_work_url)?;
+
+    let info_document = Html::parse_document(&info_body);
+
+    let info_select = get_selector("div.photo-info")?;
+
+    let actor_info = info_document
+        .select(&info_select)
+        .next()
+        .context(format!("select document return none :{:?}", info_select))?;
+
+    let ptag_select = get_selector("p")?;
+
+    let infos: Vec<ElementRef> = actor_info.select(&ptag_select).collect();
+
+    let info_vec = super::get_elements_inner_html(infos);
+
+    let mut result = ActorInfo::new(String::from(actor_name));
+
+    result.set_value_by_raw(info_vec);
+
+    Ok(result)
 }
