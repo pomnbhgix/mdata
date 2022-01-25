@@ -16,7 +16,6 @@ macro_rules! get_connect {
             Ok(mut v) => {
                 if v.is_none() {
                     *v = create_connect();
-                    println!("sqlite connect create instance");
                 }
                 v.take()
             }

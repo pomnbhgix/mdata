@@ -22,9 +22,19 @@ fn join_elements_inner_html(elements: Vec<ElementRef>) -> String {
     return get_elements_inner_html(elements).join(",");
 }
 
-fn get_elements_inner_html(elements: Vec<ElementRef>) -> Vec<String> {
+fn get_elements_attr(elements: Vec<ElementRef>, attr: &str) -> Vec<String> {
     return elements
         .iter()
-        .map(|t| t.inner_html())
+        .map(|t| {
+            if let Some(r) = t.value().attr(attr) {
+                String::from(r)
+            } else {
+                String::new()
+            }
+        })
         .collect::<Vec<_>>();
+}
+
+fn get_elements_inner_html(elements: Vec<ElementRef>) -> Vec<String> {
+    return elements.iter().map(|t| t.inner_html()).collect::<Vec<_>>();
 }

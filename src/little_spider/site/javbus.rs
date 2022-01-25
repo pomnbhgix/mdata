@@ -1,5 +1,5 @@
 use crate::little_spider::http;
-use anyhow::{Context, Error, Result};
+use anyhow::{Context, Result};
 use reqwest;
 use scraper::{ElementRef, Html, Selector};
 
@@ -196,7 +196,7 @@ impl ActorInfo {
                     "胸圍" => self.bust = get_vec_data_with_remove_cm(&vec, 1),
                     "腰圍" => self.waist = get_vec_data_with_remove_cm(&vec, 1),
                     "臀圍" => self.hip = get_vec_data_with_remove_cm(&vec, 1),
-                    _ => println!("something else!"),
+                    _ => {},
                 }
             }
         }
@@ -271,31 +271,41 @@ fn get_selector(selectors: &str) -> Result<scraper::Selector> {
     Ok(Selector::parse(selectors).map_err(|e| anyhow!("Selector parse fail : {:?}", e))?)
 }
 
-pub fn get_actor_works(actor_name: &str) -> Result<ActorInfo> {
+fn get_one_page_works_url(url: &String, index: usize) -> Result<Vec<String>> {
+    let work_url = format!("{}/{}", url, index);
+    let info_body = http::get_text_response(&work_url)?;
+    let info_document = Html::parse_document(&info_body);
+    let work_select = get_selector("#waterfall > div > a")?;
+    let actor_infos: Vec<ElementRef> = info_document.select(&work_select).collect();
+    let href_vec = super::get_elements_attr(actor_infos, "href");
+    return Ok(href_vec);
+}
+
+pub fn get_actor_works(actor_name: &str) -> Result<Vec<String>> {
     let data_url = get_actor_info_url(actor_name)?;
 
-    let date_work_url = data_url.clone() + "/10";
+    let date_work_url = data_url.clone();
 
-    let info_body = http::get_text_response(&date_work_url)?;
+    let mut result: Vec<String> = Vec::new();
 
-    let info_document = Html::parse_document(&info_body);
+    let mut index: usize = 1;
 
-    let info_select = get_selector("div.photo-info")?;
+    while let Ok(mut urls) = get_one_page_works_url(&date_work_url, index) {
+        result.append(&mut urls);
+        index += 1;
+    }
 
-    let actor_info = info_document
-        .select(&info_select)
-        .next()
-        .context(format!("select document return none :{:?}", info_select))?;
+    let r = result
+        .iter()
+        .map(|t| {
+            if let Some(s) = std::path::Path::new(t).file_name() {
+                if let Some(st) = s.to_str() {
+                    return st.to_string();
+                }
+            }
+            String::new()
+        })
+        .collect::<Vec<_>>();
 
-    let ptag_select = get_selector("p")?;
-
-    let infos: Vec<ElementRef> = actor_info.select(&ptag_select).collect();
-
-    let info_vec = super::get_elements_inner_html(infos);
-
-    let mut result = ActorInfo::new(String::from(actor_name));
-
-    result.set_value_by_raw(info_vec);
-
-    Ok(result)
+    return Ok(r);
 }
