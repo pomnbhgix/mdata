@@ -45,7 +45,7 @@ const DATA: &'static [&'static str] = &[
 ];
 
 const DATA_WKI: &'static [&'static str] = &[
-    "クリムゾン_(漫画家)",
+    "クリムゾン",
     "よしろん（鎖キャタピラ）",
     "長瀬徹（揚げナス）",
     "Hisasi",
@@ -81,32 +81,31 @@ const DATA_WKI: &'static [&'static str] = &[
 ];
 
 #[derive(Debug)]
-struct Mangaka {
-    name: String,
-    alias: String,
-    group: String,
-    gender:String,
-    r18:bool,
-    born:String
+pub struct Mangaka {
+    pub name: String,
+    pub alias: String,
+    pub group: String,
+    pub gender: String,
+    pub r18: bool,
+    pub born: String,
 }
 
 pub fn get_ero_manage_woman_authors() {
     for name in DATA_WKI {
-        let author_name = handle_author_name(&name);
+        let (name1, name2) = handle_author_name(&name);
+
+        crate::sqlite_handler::save_actor_mangaka_data(name1.to_string(), name2.to_string());
         // if let Ok(d) = site::wikipedia::get_info_text(author_name) {
         //     println!("{}", d);
         // }
     }
 }
 
-fn handle_author_name(name: &str) -> &str {
+fn handle_author_name(name: &str) -> (&str, &str) {
     if name.contains("（") {
-        return name;
+        return (name, "");
     } else {
         let ns = name.split("（").collect::<Vec<_>>();
-        if let Some(r) = ns.first() {
-            return r;
-        }
-        return "";
+        return (ns.get(0).unwrap(), if ns.get(1).is_none(){""}else{ns.get(1).unwrap()});
     }
 }

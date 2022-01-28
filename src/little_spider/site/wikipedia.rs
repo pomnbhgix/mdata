@@ -131,11 +131,12 @@ pub fn get_info_text(name: &str) -> Result<String> {
 
     let select = little_spider::get_selector("table.infobox")?;
 
-    let ele = document
+    let node = document
         .select(&select)
         .next()
         .ok_or(anyhow!("not found node"))?;
 
+    //#mw-content-text > div.mw-parser-output > table:nth-child(3) > tbody > tr:nth-child(1) > th
 
-    Ok(ele.inner_html())
+    Ok(node.inner_html())
 }

@@ -103,6 +103,22 @@ fn insert_or_replace_anime_info(connect: Connection, data: &javbus::ActorInfo) -
         params![data.name,data.born,data.height,data.bra,data.hobby,data.get_body_measurements()]);
 }
 
+fn insert_or_replace_mangaka_info(connect: Connection, name: String, alias: String) -> Result<usize> {
+    return connect.execute(
+        "INSERT OR REPLACE INTO mangakaInfo(name,alias,gender) VALUES (?1, ?2, ?3)",
+        params![name,alias,"woman"]);
+}
+
+pub fn save_actor_mangaka_data(name: String, alias: String){
+    if let Some(connect) = get_connect!() {
+        if let Err(n) = insert_or_replace_mangaka_info(connect, name, alias) {
+            println!("action fail err:{}", n);
+        } else {
+            println!("action success");
+        }
+    }
+}
+
 pub fn save_actor_info_data(data: &javbus::ActorInfo) {
     if let Some(connect) = get_connect!() {
         if let Err(n) = insert_or_replace_anime_info(connect, data) {
