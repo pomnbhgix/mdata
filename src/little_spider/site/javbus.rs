@@ -1,4 +1,5 @@
 use crate::little_spider::http;
+use crate::little_spider;
 use anyhow::{Context, Result};
 use reqwest;
 use scraper::{ElementRef, Html, Selector};
@@ -225,7 +226,7 @@ fn get_actor_info_url(actor_name: &str) -> Result<String> {
 
     let document = Html::parse_document(&body);
 
-    let select = get_selector("#waterfall > div > a")?;
+    let select =little_spider:: get_selector("#waterfall > div > a")?;
 
     let data = document
         .select(&select)
@@ -247,14 +248,14 @@ pub fn get_actor_info(actor_name: &str) -> Result<ActorInfo, Box<dyn std::error:
 
     let info_document = Html::parse_document(&info_body);
 
-    let info_select = get_selector("div.photo-info")?;
+    let info_select =little_spider::get_selector("div.photo-info")?;
 
     let actor_info = info_document
         .select(&info_select)
         .next()
         .context(format!("select document return none :{:?}", info_select))?;
 
-    let ptag_select = get_selector("p")?;
+    let ptag_select =little_spider:: get_selector("p")?;
 
     let infos: Vec<ElementRef> = actor_info.select(&ptag_select).collect();
 
@@ -267,15 +268,12 @@ pub fn get_actor_info(actor_name: &str) -> Result<ActorInfo, Box<dyn std::error:
     Ok(result)
 }
 
-fn get_selector(selectors: &str) -> Result<scraper::Selector> {
-    Ok(Selector::parse(selectors).map_err(|e| anyhow!("Selector parse fail : {:?}", e))?)
-}
 
 fn get_one_page_works_url(url: &String, index: usize) -> Result<Vec<String>> {
     let work_url = format!("{}/{}", url, index);
     let info_body = http::get_text_response(&work_url)?;
     let info_document = Html::parse_document(&info_body);
-    let work_select = get_selector("#waterfall > div > a")?;
+    let work_select = little_spider::get_selector("#waterfall > div > a")?;
     let actor_infos: Vec<ElementRef> = info_document.select(&work_select).collect();
     let href_vec = super::get_elements_attr(actor_infos, "href");
     return Ok(href_vec);

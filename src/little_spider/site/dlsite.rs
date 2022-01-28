@@ -1,4 +1,6 @@
+use anyhow::Result;
 use scraper::{ElementRef, Html, Selector};
+use crate::little_spider;
 
 #[derive(Debug)]
 pub struct Asmr {
@@ -95,4 +97,18 @@ fn get_select_element_inner_html(doc: &Html, select: &'_ str) -> String {
         }
     }
     return String::new();
+}
+
+pub fn get_ero_manage_woman_authors() -> Result<Vec<String>> {
+    let url = "https://ch.dlsite.com/matome/open/api/matome-data/85371";
+
+    let body = reqwest::blocking::get(url)?.text()?;
+    println!("{}", body);
+    let document = Html::parse_document(&body);
+    //#item-1 > h2
+    let selector = little_spider::get_selector("h2")?;
+
+    let names = document.select(&selector).collect::<Vec<_>>();
+    
+    Ok(super::get_elements_inner_html(names))
 }

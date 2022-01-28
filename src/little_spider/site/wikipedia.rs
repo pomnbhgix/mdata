@@ -1,4 +1,6 @@
+use crate::little_spider;
 use crate::little_spider::http;
+use anyhow::Result;
 use scraper::{ElementRef, Html, Selector};
 
 #[derive(Debug)]
@@ -55,15 +57,6 @@ fn get_dt_select_inner_html(doc: &ElementRef) -> String {
     }
     return String::new();
 }
-
-/*
-fn get_dt_select_inner_html(doc: &ElementRef) -> Result<String, Box<dyn std::error::Error>> {
-    let selector = Selector::parse("dt").expect("error");
-    if let Some(r) = doc.select(&selector).next() {
-        return Ok(r.inner_html());
-    }
-    return Ok(String::new());
-}*/
 
 pub fn get_a1c_works() -> Vec<A1CWork> {
     let url =
@@ -127,4 +120,22 @@ fn get_d1_selects(doc: &Html) -> Option<Vec<ElementRef>> {
         return Some(doc.select(&v).collect());
     }
     return None;
+}
+
+pub fn get_info_text(name: &str) -> Result<String> {
+    let url = format!("https://ja.wikipedia.org/wiki/{}", name);
+
+    let response = http::get_text_response(&url)?;
+
+    let document = Html::parse_document(&response);
+
+    let select = little_spider::get_selector("table.infobox")?;
+
+    let ele = document
+        .select(&select)
+        .next()
+        .ok_or(anyhow!("not found node"))?;
+
+
+    Ok(ele.inner_html())
 }
