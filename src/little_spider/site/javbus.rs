@@ -1,6 +1,7 @@
-use crate::little_spider::http;
 use crate::little_spider;
+use crate::little_spider::http;
 use anyhow::{Context, Result};
+use crossbeam_utils::thread;
 use reqwest;
 use scraper::{ElementRef, Html, Selector};
 
@@ -197,7 +198,7 @@ impl ActorInfo {
                     "胸圍" => self.bust = get_vec_data_with_remove_cm(&vec, 1),
                     "腰圍" => self.waist = get_vec_data_with_remove_cm(&vec, 1),
                     "臀圍" => self.hip = get_vec_data_with_remove_cm(&vec, 1),
-                    _ => {},
+                    _ => {}
                 }
             }
         }
@@ -226,7 +227,7 @@ fn get_actor_info_url(actor_name: &str) -> Result<String> {
 
     let document = Html::parse_document(&body);
 
-    let select =little_spider:: get_selector("#waterfall > div > a")?;
+    let select = little_spider::get_selector("#waterfall > div > a")?;
 
     let data = document
         .select(&select)
@@ -248,14 +249,14 @@ pub fn get_actor_info(actor_name: &str) -> Result<ActorInfo, Box<dyn std::error:
 
     let info_document = Html::parse_document(&info_body);
 
-    let info_select =little_spider::get_selector("div.photo-info")?;
+    let info_select = little_spider::get_selector("div.photo-info")?;
 
     let actor_info = info_document
         .select(&info_select)
         .next()
         .context(format!("select document return none :{:?}", info_select))?;
 
-    let ptag_select =little_spider:: get_selector("p")?;
+    let ptag_select = little_spider::get_selector("p")?;
 
     let infos: Vec<ElementRef> = actor_info.select(&ptag_select).collect();
 
@@ -267,7 +268,6 @@ pub fn get_actor_info(actor_name: &str) -> Result<ActorInfo, Box<dyn std::error:
 
     Ok(result)
 }
-
 
 fn get_one_page_works_url(url: &String, index: usize) -> Result<Vec<String>> {
     let work_url = format!("{}/{}", url, index);
@@ -307,3 +307,107 @@ pub fn get_actor_works(actor_name: &str) -> Result<Vec<String>> {
 
     return Ok(r);
 }
+
+const BASE_URL: &str = "https://www.javbus.com/";
+
+fn get_url_filename(url: String) -> Option<String> {
+    if let Some(s) = std::path::Path::new(&url).file_name() {
+        if let Some(st) = s.to_str() {
+            return Some(st.to_string());
+        }
+    }
+    Option::None
+}
+
+use std::sync::{Arc, Mutex};
+pub fn get_recent_videos(page_count: Option<usize>) {
+    let p_count = page_count.unwrap_or(3);
+    let infos: Vec<Video> = Vec::new();
+    let connections = Arc::new(Mutex::new(infos));
+    //let mut infos: Vec<String> = Vec::new();
+    thread::scope(|scope| {
+        let conn = &connections;
+        for p in 1..p_count {
+            scope.spawn(move |_| {
+                let url = format!("{}/{}", BASE_URL, "page");
+                let urls = get_one_page_works_url(&url, p).unwrap();
+                for u in urls {
+                    let filename = get_url_filename(u);
+                    if let Some(name) = filename {
+                        let info = get_video_info(name).unwrap();
+                        conn.lock().unwrap().push(info);
+                        break;
+                    }
+                }
+                //people.push("aa".to_string());
+            });
+            break;
+        }
+    })
+    .unwrap();
+
+    println!("{:?}", connections.lock().unwrap());
+}
+
+pub fn get_recent_videos_v1(page_count: Option<usize>) {
+    let p_count = page_count.unwrap_or(3);
+    let infos: Vec<Video> = Vec::new();
+    let connections = Arc::new(Mutex::new(infos));
+    //let mut infos: Vec<String> = Vec::new();
+    thread::scope(|scope| {
+        let conn = &connections;
+        for p in 1..p_count {
+            scope.spawn(move |_| {
+                let url = format!("{}/{}", BASE_URL, "page");
+                let urls = get_one_page_works_url(&url, p).unwrap();
+                for u in urls {
+                    let filename = get_url_filename(u);
+                    if let Some(name) = filename {
+                        let info = get_video_info(name).unwrap();
+                        conn.lock().unwrap().push(info);
+                        break;
+                    }
+                }
+                //people.push("aa".to_string());
+            });
+            break;
+        }
+    })
+    .unwrap();
+
+    println!("{:?}", connections.lock().unwrap());
+}
+
+pub fn get_recent_videos_v2(page_count: Option<usize>) {
+    let p_count = page_count.unwrap_or(3);
+    let mut infos: Vec<Video> = Vec::new();
+
+    thread::scope(|scope| {
+        let infos = &mut infos;
+        for p in 1..p_count {
+            scope.spawn(move |_| {
+                let url = format!("{}/{}", BASE_URL, "page");
+                let urls = get_one_page_works_url(&url, p).unwrap();
+                for u in urls {
+                    let filename = get_url_filename(u);
+                    if let Some(name) = filename {
+                        let info = get_video_info(name).unwrap();
+                        infos.push(info);
+                        break;
+                    }
+                }
+            });
+            break;
+        }
+    })
+    .unwrap();
+
+    println!("{:?}", infos);
+}
+
+// let url = format!("{}/{}", BASE_URL, "page");
+// let urls = get_one_page_works_url(&url, 1).unwrap();
+// for u in urls {
+//     let info = get_video_info(u).unwrap();
+//     infos.push(info);
+// }

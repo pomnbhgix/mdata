@@ -20,6 +20,8 @@ mod tests {
 
     #[test]
     fn exploration() {
-        little_spider::get_ero_manage_woman_authors();
+
+        little_spider::site::javbus::get_recent_videos(Option::None);
+
     }
 }
