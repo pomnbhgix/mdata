@@ -1,6 +1,7 @@
 use crate::little_spider;
 use crate::little_spider::http;
 use anyhow::{Context, Result};
+use crossbeam_channel::unbounded;
 use crossbeam_utils::thread;
 use reqwest;
 use scraper::{ElementRef, Html, Selector};
@@ -320,33 +321,39 @@ fn get_url_filename(url: String) -> Option<String> {
 }
 
 use std::sync::{Arc, Mutex};
-pub fn get_recent_videos(page_count: Option<usize>) {
-    let p_count = page_count.unwrap_or(3);
-    let infos: Vec<Video> = Vec::new();
-    let connections = Arc::new(Mutex::new(infos));
-    //let mut infos: Vec<String> = Vec::new();
+
+pub fn get_recent_videos() {
+    let (snd1, rcv1) = unbounded::<String>();
+    let source = 3;
+    let n_workers = 5;
+    let url = format!("{}{}", BASE_URL, "page");
     thread::scope(|scope| {
-        let conn = &connections;
-        for p in 1..p_count {
+        let url = &url;
+        for i in 1..source {
+            let snd1 = snd1.clone();
             scope.spawn(move |_| {
-                let url = format!("{}/{}", BASE_URL, "page");
-                let urls = get_one_page_works_url(&url, p).unwrap();
+                let urls = get_one_page_works_url(url, i).unwrap();
+                println!("{:?}", urls);
                 for u in urls {
-                    let filename = get_url_filename(u);
-                    if let Some(name) = filename {
-                        let info = get_video_info(name).unwrap();
-                        conn.lock().unwrap().push(info);
-                        break;
-                    }
+                    snd1.send(u).unwrap();
                 }
-                //people.push("aa".to_string());
             });
-            break;
         }
+        for _ in 0..n_workers {
+            let rcv1 = rcv1.clone();
+            scope.spawn(move |_| {
+                for msg in rcv1.iter() {
+                    println!("received {}.", msg);
+                }
+            });
+        }
+        // 关闭信道，否则接收器不会关闭
+        // 退出 for 循坏
+        drop(snd1);
     })
     .unwrap();
 
-    println!("{:?}", connections.lock().unwrap());
+    println!("end");
 }
 
 pub fn get_recent_videos_v1(page_count: Option<usize>) {

@@ -8,6 +8,7 @@ extern crate serde;
 #[macro_use]
 extern crate anyhow;
 extern crate crossbeam_utils;
+extern crate crossbeam_channel;
 
 pub mod config;
 pub mod file;
@@ -21,7 +22,7 @@ mod tests {
     #[test]
     fn exploration() {
 
-        little_spider::site::javbus::get_recent_videos(Option::None);
+        little_spider::site::javbus::get_recent_videos();
 
     }
 }
