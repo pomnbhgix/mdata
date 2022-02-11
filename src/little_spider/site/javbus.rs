@@ -322,28 +322,38 @@ fn get_url_filename(url: String) -> Option<String> {
 
 use std::sync::{Arc, Mutex};
 
-pub fn get_recent_videos() {
+pub fn get_recent_videos() -> Result<Vec<Video>> {
     let (snd1, rcv1) = unbounded::<String>();
     let source = 3;
     let n_workers = 5;
     let url = format!("{}{}", BASE_URL, "page");
+    let infos: Vec<Video> = Vec::new();
+    let connections = Arc::new(Mutex::new(infos));
     thread::scope(|scope| {
         let url = &url;
         for i in 1..source {
             let snd1 = snd1.clone();
             scope.spawn(move |_| {
-                let urls = get_one_page_works_url(url, i).unwrap();
-                println!("{:?}", urls);
-                for u in urls {
-                    snd1.send(u).unwrap();
+                //let urls = get_one_page_works_url(url, i).unwrap();
+                if let Ok(urls) = get_one_page_works_url(url, i) {
+                    println!("{:?}", urls);
+                    for u in urls {
+                        snd1.send(u).unwrap();
+                    }
                 }
+                //let urls = get_one_page_works_url(url, i).unwrap();
             });
         }
+        let conn = &connections;
         for _ in 0..n_workers {
             let rcv1 = rcv1.clone();
             scope.spawn(move |_| {
                 for msg in rcv1.iter() {
-                    println!("received {}.", msg);
+                    let filename = get_url_filename(msg);
+                    if let Some(name) = filename {
+                        let info = get_video_info(name).unwrap();
+                        conn.lock().unwrap().push(info);
+                    }
                 }
             });
         }
@@ -352,8 +362,12 @@ pub fn get_recent_videos() {
         drop(snd1);
     })
     .unwrap();
-
     println!("end");
+    println!("result {:?}", connections.lock().unwrap());
+
+    let resulr = Arc::try_unwrap(connections).unwrap().into_inner().unwrap();
+
+    Ok(resulr)
 }
 
 pub fn get_recent_videos_v1(page_count: Option<usize>) {

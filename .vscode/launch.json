@@ -19,14 +19,14 @@
             "name": "Run Test Debugger",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/target/debug/deps/mdata-87c0a2c0a2ad20a3.exe",
+            "program": "${workspaceFolder}/target/debug/deps/mdata-4a4cbaf4026d9c58.exe",
             "args": [
                 "--nocapture"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
-            "console": "externalTerminal",
+            "console": "integratedTerminal",
             "preLaunchTask": "cargo test build",
         },
         {
