@@ -16,3 +16,12 @@ pub fn get_text_response(url: &str) -> Result<String> {
 
     bail!("response has some question:{}", response.status());
 }
+
+pub fn get_url_filename(url: &String) -> Option<String> {
+    if let Some(s) = std::path::Path::new(url).file_name() {
+        if let Some(st) = s.to_str() {
+            return Some(st.to_string());
+        }
+    }
+    Option::None
+}

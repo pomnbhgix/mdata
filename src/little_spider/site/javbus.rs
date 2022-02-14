@@ -1,8 +1,6 @@
 use crate::little_spider;
 use crate::little_spider::http;
 use anyhow::{Context, Result};
-use crossbeam_channel::unbounded;
-use crossbeam_utils::thread;
 use reqwest;
 use scraper::{ElementRef, Html, Selector};
 
@@ -126,7 +124,7 @@ impl Video {
     }
 }
 
-pub fn get_video_info(produce_id: String) -> Result<Video, Box<dyn std::error::Error>> {
+pub fn get_video_info(produce_id: String) -> Result<Video> {
     let url = format!("https://www.javbus.com/{}", produce_id);
 
     let body = reqwest::blocking::get(url)?.text()?;
@@ -233,14 +231,12 @@ fn get_actor_info_url(actor_name: &str) -> Result<String> {
     let data = document
         .select(&select)
         .next()
-        .context(format!("select document return none :{:?}", select))?;
-
-    let data_url = data
+        .context(format!("select document return none :{:?}", select))?
         .value()
         .attr("href")
-        .context(format!("read attr attr return none :{:?}", data))?;
+        .context(format!("read attr attr return none"))?;
 
-    Ok(String::from(data_url))
+    Ok(data.to_string())
 }
 
 pub fn get_actor_info(actor_name: &str) -> Result<ActorInfo, Box<dyn std::error::Error>> {
@@ -282,28 +278,16 @@ fn get_one_page_works_url(url: &String, index: usize) -> Result<Vec<String>> {
 
 pub fn get_actor_works(actor_name: &str) -> Result<Vec<String>> {
     let data_url = get_actor_info_url(actor_name)?;
-
-    let date_work_url = data_url.clone();
-
     let mut result: Vec<String> = Vec::new();
-
     let mut index: usize = 1;
-
-    while let Ok(mut urls) = get_one_page_works_url(&date_work_url, index) {
+    while let Ok(mut urls) = get_one_page_works_url(&data_url, index) {
         result.append(&mut urls);
         index += 1;
     }
 
     let r = result
         .iter()
-        .map(|t| {
-            if let Some(s) = std::path::Path::new(t).file_name() {
-                if let Some(st) = s.to_str() {
-                    return st.to_string();
-                }
-            }
-            String::new()
-        })
+        .map(|t| http::get_url_filename(&t).unwrap_or(String::new()))
         .collect::<Vec<_>>();
 
     return Ok(r);
@@ -311,124 +295,23 @@ pub fn get_actor_works(actor_name: &str) -> Result<Vec<String>> {
 
 const BASE_URL: &str = "https://www.javbus.com/";
 
-fn get_url_filename(url: String) -> Option<String> {
-    if let Some(s) = std::path::Path::new(&url).file_name() {
-        if let Some(st) = s.to_str() {
-            return Some(st.to_string());
+const FILTER_TAGS: &'static [&'static str] = &["成熟的女人"];
+
+pub fn get_recent_video_urls(page_index: usize) -> Result<Vec<String>> {
+    let url = format!("{}{}", BASE_URL, "page");
+    get_one_page_works_url(&url, page_index)
+}
+
+pub fn get_video_info_by_url(url: String) -> Result<Video> {
+    let filename = http::get_url_filename(&url).ok_or(anyhow!("get_url_filename err"))?;
+    get_video_info(filename)
+}
+
+pub fn check_filter(video: &Video) -> bool {
+    for f in FILTER_TAGS {
+        if video.tags.contains(f) {
+            return false;
         }
     }
-    Option::None
+    true
 }
-
-use std::sync::{Arc, Mutex};
-
-pub fn get_recent_videos() -> Result<Vec<Video>> {
-    let (snd1, rcv1) = unbounded::<String>();
-    let source = 3;
-    let n_workers = 5;
-    let url = format!("{}{}", BASE_URL, "page");
-    let infos: Vec<Video> = Vec::new();
-    let connections = Arc::new(Mutex::new(infos));
-    thread::scope(|scope| {
-        let url = &url;
-        for i in 1..source {
-            let snd1 = snd1.clone();
-            scope.spawn(move |_| {
-                //let urls = get_one_page_works_url(url, i).unwrap();
-                if let Ok(urls) = get_one_page_works_url(url, i) {
-                    println!("{:?}", urls);
-                    for u in urls {
-                        snd1.send(u).unwrap();
-                    }
-                }
-                //let urls = get_one_page_works_url(url, i).unwrap();
-            });
-        }
-        let conn = &connections;
-        for _ in 0..n_workers {
-            let rcv1 = rcv1.clone();
-            scope.spawn(move |_| {
-                for msg in rcv1.iter() {
-                    let filename = get_url_filename(msg);
-                    if let Some(name) = filename {
-                        let info = get_video_info(name).unwrap();
-                        conn.lock().unwrap().push(info);
-                    }
-                }
-            });
-        }
-        // 关闭信道，否则接收器不会关闭
-        // 退出 for 循坏
-        drop(snd1);
-    })
-    .unwrap();
-    println!("end");
-    println!("result {:?}", connections.lock().unwrap());
-
-    let resulr = Arc::try_unwrap(connections).unwrap().into_inner().unwrap();
-
-    Ok(resulr)
-}
-
-pub fn get_recent_videos_v1(page_count: Option<usize>) {
-    let p_count = page_count.unwrap_or(3);
-    let infos: Vec<Video> = Vec::new();
-    let connections = Arc::new(Mutex::new(infos));
-    //let mut infos: Vec<String> = Vec::new();
-    thread::scope(|scope| {
-        let conn = &connections;
-        for p in 1..p_count {
-            scope.spawn(move |_| {
-                let url = format!("{}/{}", BASE_URL, "page");
-                let urls = get_one_page_works_url(&url, p).unwrap();
-                for u in urls {
-                    let filename = get_url_filename(u);
-                    if let Some(name) = filename {
-                        let info = get_video_info(name).unwrap();
-                        conn.lock().unwrap().push(info);
-                        break;
-                    }
-                }
-                //people.push("aa".to_string());
-            });
-            break;
-        }
-    })
-    .unwrap();
-
-    println!("{:?}", connections.lock().unwrap());
-}
-
-pub fn get_recent_videos_v2(page_count: Option<usize>) {
-    let p_count = page_count.unwrap_or(3);
-    let mut infos: Vec<Video> = Vec::new();
-
-    thread::scope(|scope| {
-        let infos = &mut infos;
-        for p in 1..p_count {
-            scope.spawn(move |_| {
-                let url = format!("{}/{}", BASE_URL, "page");
-                let urls = get_one_page_works_url(&url, p).unwrap();
-                for u in urls {
-                    let filename = get_url_filename(u);
-                    if let Some(name) = filename {
-                        let info = get_video_info(name).unwrap();
-                        infos.push(info);
-                        break;
-                    }
-                }
-            });
-            break;
-        }
-    })
-    .unwrap();
-
-    println!("{:?}", infos);
-}
-
-// let url = format!("{}/{}", BASE_URL, "page");
-// let urls = get_one_page_works_url(&url, 1).unwrap();
-// for u in urls {
-//     let info = get_video_info(u).unwrap();
-//     infos.push(info);
-// }
