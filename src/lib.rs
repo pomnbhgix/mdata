@@ -15,6 +15,7 @@ pub mod file;
 pub mod little_spider;
 pub mod sqlite_handler;
 
+#[macro_export]
 #[allow(unused_macros)]
 macro_rules! skip_fail {
     ($res:expr) => {
@@ -40,7 +41,7 @@ mod tests {
     use crossbeam_channel::unbounded;
     use crossbeam_utils::thread;
 
-    pub fn get_recent_videos(page_count: Option<usize>) {
+    fn get_recent_videos(page_count: Option<usize>) {
         let (snd1, rcv1) = unbounded::<String>();
         let source = page_count.unwrap_or(3);
         let n_workers = 5;
@@ -66,11 +67,12 @@ mod tests {
                     }
                 });
             }
-            
             // 关闭信道，否则接收器不会关闭
             // 退出 for 循坏
             drop(snd1);
         })
         .unwrap()
     }
+
+    fn handle_video_info(video: javbus::Video) {}
 }
