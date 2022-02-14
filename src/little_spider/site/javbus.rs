@@ -13,6 +13,7 @@ pub struct Video {
     pub series: String,
     pub tags: String,
     pub actors: String,
+    pub trashed: bool,
 }
 
 impl Video {
@@ -25,6 +26,7 @@ impl Video {
             series: String::new(),
             tags: String::new(),
             actors: String::new(),
+            trashed: true,
         };
     }
 
@@ -304,7 +306,9 @@ pub fn get_recent_video_urls(page_index: usize) -> Result<Vec<String>> {
 
 pub fn get_video_info_by_url(url: String) -> Result<Video> {
     let filename = http::get_url_filename(&url).ok_or(anyhow!("get_url_filename err"))?;
-    get_video_info(filename)
+    let mut info = get_video_info(filename)?;
+    info.trashed = check_filter(&info);
+    Ok(info)
 }
 
 pub fn check_filter(video: &Video) -> bool {

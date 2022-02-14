@@ -1,5 +1,5 @@
-use mdata::little_spider::site::dlsite;
-use mdata::little_spider::site::javbus;
+use mdata::data_manager;
+use mdata::little_spider::site::{dlsite, javbus};
 use mdata::sqlite_handler;
 
 fn main() {
@@ -8,7 +8,8 @@ fn main() {
         "ca" => check_asmr(opt.rest),
         "cai" => check_actor_info(opt.rest),
         "cv" => check_video(opt.rest),
-        _=>{},
+        "cr" => data_manager::get_recent_videos(Option::None),
+        _ => {}
     }
 }
 
@@ -24,12 +25,11 @@ fn check_actor_info(data: Vec<String>) {
         let r = javbus::get_actor_info(&id).expect("get actor info fail");
         sqlite_handler::save_actor_info_data(&r);
 
-        for work in javbus::get_actor_works(&id).expect("get works info fail"){
+        for work in javbus::get_actor_works(&id).expect("get works info fail") {
             if let Ok(info) = javbus::get_video_info(work) {
-                sqlite_handler:: save_video_data(&info)
+                sqlite_handler::save_video_data(&info)
             }
         }
-
     }
 }
 

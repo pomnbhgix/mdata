@@ -4,7 +4,6 @@ use anyhow::Result;
 use rusqlite::{params, Connection};
 use std::sync::Mutex;
 
-
 lazy_static! {
     static ref DATABASE: Mutex<Option<Connection>> = Mutex::new(None);
 }
@@ -36,22 +35,18 @@ fn create_connect() -> Result<Connection> {
 fn insert_or_replace(connect: Connection, data: &javbus::Video) -> Result<usize> {
     return connect.execute(
         "INSERT OR REPLACE INTO avInfo(product_id,name,actors,date,tags,author,series,state) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-        params![data.produce_id,data.name,data.actors,data.date,data.tags,data.author,data.series,"uncheck"])
+        params![data.produce_id,data.name,data.actors,data.date,data.tags,data.author,data.series,is_trashed(data.trashed)])
         .map_err(|e|anyhow::Error::new(e));
 }
 
-pub fn save_video_data(data: &javbus::Video) {
-    if let Some(connect) = get_connect!() {
-        if let Err(n) = insert_or_replace(connect, data) {
-            println!("action fail err:{}", n);
-        } else {
-            println!("action success");
-            println!("{:?}", data);
-        }
+fn is_trashed(flag: bool) -> String {
+    if flag {
+        return String::from("uncheck");
     }
+    return String::from("trashed");
 }
 
-pub fn save_trashed_video_data(data: &javbus::Video) {
+pub fn save_video_data(data: &javbus::Video) {
     if let Some(connect) = get_connect!() {
         if let Err(n) = insert_or_replace(connect, data) {
             println!("action fail err:{}", n);
