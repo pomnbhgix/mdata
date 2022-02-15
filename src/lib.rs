@@ -32,9 +32,12 @@ macro_rules! skip_fail {
 
 #[cfg(test)]
 mod tests {
-    use super::little_spider::site::javbus;
+    use super::file;
+
     #[test]
     fn exploration() {
-        println!("{:?}", javbus::get_recent_video_urls(2).unwrap());
+
+
+
     }
 }

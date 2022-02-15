@@ -87,6 +87,24 @@ pub fn read_data_v2(path: &str) -> Vec<String> {
     return vec;
 }
 
+pub fn read_data_v3(path: &str) -> Vec<String> {
+    let mut vec: Vec<String> = Vec::new();
+    if let Ok(lines) = read_lines(path) {
+        for line in lines {
+            if let Ok(l) = line {
+                if l.contains("##") {
+                    continue;
+                }
+                if l.is_empty() {
+                    continue;
+                }
+                vec.push(l);
+            }
+        }
+    }
+    return vec;
+}
+
 pub fn read_asmr_data(path: &str) -> Vec<String> {
     let mut vec: Vec<String> = Vec::new();
     if let Ok(lines) = read_lines(path) {

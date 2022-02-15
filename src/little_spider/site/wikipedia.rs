@@ -20,6 +20,14 @@ impl A1CWork {
             episodes: episodes,
         }
     }
+    pub fn newv2(name: String, author: String) -> A1CWork {
+        A1CWork {
+            name: name,
+            author: author,
+            date: String::new(),
+            episodes: String::new(),
+        }
+    }
 }
 
 fn get_author(node: &ElementRef) -> String {
