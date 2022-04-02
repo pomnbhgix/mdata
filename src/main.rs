@@ -16,18 +16,18 @@ fn main() {
 fn check_asmr(data: Vec<String>) {
     for id in data {
         let r = dlsite::get_asmr_info(id.to_uppercase()).unwrap();
-        sqlite_handler::save_asmr_data(&r);
+        //sqlite_handler::save_asmr_data(&r);
     }
 }
 
 fn check_actor_info(data: Vec<String>) {
     for id in data {
         let r = javbus::get_actor_info(&id).expect("get actor info fail");
-        sqlite_handler::save_actor_info_data(&r);
+        //sqlite_handler::save_actor_info_data(&r);
 
         for work in javbus::get_actor_works(&id).expect("get works info fail") {
             if let Ok(info) = javbus::get_video_info(work) {
-                sqlite_handler::save_video_data(&info)
+                //sqlite_handler::save_video_data(&info)
             }
         }
     }
@@ -36,7 +36,7 @@ fn check_actor_info(data: Vec<String>) {
 fn check_video(data: Vec<String>) {
     for id in data {
         let info = javbus::get_video_info(id).unwrap();
-        sqlite_handler::save_video_data(&info);
+        //sqlite_handler::save_video_data(&info);
     }
 }
 

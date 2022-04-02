@@ -1,5 +1,6 @@
-use crate::little_spider::site::*;
+use crate::little_spider::{http,site::*};
 use crate::sqlite_handler;
+use anyhow::{Context, Result};
 use crossbeam_channel::unbounded;
 use crossbeam_utils::thread;
 
@@ -23,8 +24,9 @@ pub fn get_recent_videos(page_count: Option<usize>) {
             let rcv1 = rcv1.clone();
             scope.spawn(move |_| {
                 for msg in rcv1.iter() {
-                    let video = crate::skip_fail!(javbus::get_video_info_by_url(msg));
-                    sqlite_handler::save_video_data(&video);
+                    if let Err(e) = spider_video_and_save(msg) {
+                        println!("{:?}", e);
+                    }
                 }
             });
         }
@@ -35,4 +37,18 @@ pub fn get_recent_videos(page_count: Option<usize>) {
     .unwrap()
 }
 
+fn spider_video_and_save(url: String) -> Result<()> {
+    let id = http::get_url_filename(&url).context("url id not found")?;
 
+    //if !sqlite_handler::check_video_exist(&id) {
+        let video_info = javbus::get_video_info(id)?;
+
+        if !video_info.trashed{
+            println!("{:?}",video_info);
+        }
+        sqlite_handler::test();
+        //sqlite_handler::save_video_data(&video_info);
+    //}
+
+    Ok(())
+}

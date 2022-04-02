@@ -58,7 +58,7 @@ pub fn get_ero_manage_woman_authors() {
     for name in DATA_WKI {
         let (name1, name2) = handle_author_name(&name);
 
-        crate::sqlite_handler::save_actor_mangaka_data(name1.to_string(), name2.to_string());
+        //crate::sqlite_handler::save_actor_mangaka_data(name1.to_string(), name2.to_string());
         // if let Ok(d) = site::wikipedia::get_info_text(author_name) {
         //     println!("{}", d);
         // }

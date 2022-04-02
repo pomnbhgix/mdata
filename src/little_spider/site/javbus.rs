@@ -137,6 +137,8 @@ pub fn get_video_info(produce_id: String) -> Result<Video> {
 
     result.init(&document);
 
+    result.trashed = check_filter(&result);
+
     return Ok(result);
 }
 
@@ -241,7 +243,7 @@ fn get_actor_info_url(actor_name: &str) -> Result<String> {
     Ok(data.to_string())
 }
 
-pub fn get_actor_info(actor_name: &str) -> Result<ActorInfo, Box<dyn std::error::Error>> {
+pub fn get_actor_info(actor_name: &str) -> Result<ActorInfo> {
     let data_url = get_actor_info_url(actor_name)?;
 
     let info_body = http::get_text_response(&data_url)?;

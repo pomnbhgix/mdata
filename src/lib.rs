@@ -32,12 +32,10 @@ macro_rules! skip_fail {
 
 #[cfg(test)]
 mod tests {
-    use super::file;
+    use super::data_manager;
 
     #[test]
     fn exploration() {
-
-
-
+        data_manager::get_recent_videos(Some(3));
     }
 }
